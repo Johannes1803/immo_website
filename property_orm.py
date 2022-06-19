@@ -7,12 +7,16 @@ from sqlalchemy import (
     String,
     ForeignKey,
     create_engine,
+    Enum,
 )
+from property import EnergyEfficiency
 
 Base = declarative_base()
 
 
 class Broker(Base):
+    """An agent who manages the seller perspective."""
+
     __tablename__ = "BROKER"
     id = Column(Integer, primary_key=True)
     first_name = Column(String)
@@ -20,6 +24,8 @@ class Broker(Base):
 
 
 class Property(Base):
+    """A base class for rentals, houses for sales, etc."""
+
     # ToDo: add attributes which are non-primitive types
     __tablename__ = "PROPERTY"
     id = Column(Integer, primary_key=True)
@@ -31,6 +37,7 @@ class Property(Base):
     is_kitchen_included = Column(Boolean)
     is_balcony_available = Column(Boolean)
     is_garden_available = Column(Boolean)
+    energy_efficiency = Column(Enum(EnergyEfficiency))
     broker_id = Column(Integer, ForeignKey("BROKER.id"))
     broker = relationship("Broker", backref="properties")
 
