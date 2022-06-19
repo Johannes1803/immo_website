@@ -24,6 +24,13 @@ class Property(Base):
     __tablename__ = "PROPERTY"
     id = Column(Integer, primary_key=True)
     size = Column(Float)
+    floor = Column(Integer)
+    rooms = Column(Integer)
+    year_of_construction = Column(Integer)
+    is_furnished = Column(Boolean)
+    is_kitchen_included = Column(Boolean)
+    is_balcony_available = Column(Boolean)
+    is_garden_available = Column(Boolean)
     broker_id = Column(Integer, ForeignKey("BROKER.id"))
     broker = relationship("Broker", backref="properties")
 
