@@ -86,17 +86,28 @@ class Broker(Actor):
 
 @dataclass
 class Taker(Actor):
-    property_stati: Optional[Dict[Property.id: StatusFromTakerPerspective]] = None
+    property_stati: Optional[Dict[Property.id : StatusFromTakerPerspective]] = None
 
     def __post_init__(self):
         super().__post_init__()
         if self.property_stati is None:
             self.property_stati = [
-                {property_id: StatusFromTakerPerspective.bookmarked for property_id in self.properties}]
-        elif set(self.property_stati.keys()) != {property_.id for property_ in self.properties}:
-            raise ValueError("The keys in property_stati must match the ids of properties exactly")
+                {
+                    property_id: StatusFromTakerPerspective.bookmarked
+                    for property_id in self.properties
+                }
+            ]
+        elif set(self.property_stati.keys()) != {
+            property_.id for property_ in self.properties
+        }:
+            raise ValueError(
+                "The keys in property_stati must match the ids of properties exactly"
+            )
 
-    def add_property(self, new_property: Property,
-                     status: StatusFromTakerPerspective = StatusFromTakerPerspective.bookmarked):
+    def add_property(
+        self,
+        new_property: Property,
+        status: StatusFromTakerPerspective = StatusFromTakerPerspective.bookmarked,
+    ):
         super().add_property(new_property)
         self.property_stati[new_property.id] = status
