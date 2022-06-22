@@ -28,16 +28,6 @@ class EnergyEfficiency(Enum):
     H = 9
 
 
-@dataclass
-class Location:
-    lat: float
-    long: float
-    city: str
-    postal_code: str
-    street: str
-    street_number: str
-
-
 class Broker(Base):
     """An agent who manages the seller perspective."""
 
@@ -64,6 +54,22 @@ class Property(Base):
     energy_efficiency = Column(SqlEnum(EnergyEfficiency))
     broker_id = Column(Integer, ForeignKey("BROKER.id"))
     broker = relationship("Broker", backref="properties")
+    location = relationship("Location", back_populates="property", uselist=False)
+
+
+class Location(Base):
+    """A location with address information."""
+
+    __tablename__ = "LOCATION"
+    id = Column(Integer, primary_key=True)
+    lat = Column(Float)
+    long = Column(Float)
+    city = Column(String)
+    postal_code = Column(String)
+    street = Column(String)
+    street_number = Column(String)
+    property_id = Column(Integer, ForeignKey("PROPERTY.id"))
+    property = relationship("Property", back_populates="location", uselist=False)
 
 
 if __name__ == "__main__":
@@ -87,5 +93,17 @@ if __name__ == "__main__":
         energy_efficiency=EnergyEfficiency.B,
         broker=broker,
     )
+    session.add(property_1)
+
+    location_1 = Location(
+        lat=100.1,
+        long=89.03,
+        city="London",
+        street="Downing Street",
+        street_number="14b",
+        postal_code="431",
+        property=property_1,
+    )
+    session.add(location_1)
 
     session.commit()
