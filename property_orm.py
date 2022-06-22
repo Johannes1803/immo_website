@@ -1,3 +1,6 @@
+from dataclasses import dataclass
+from enum import Enum
+
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 from sqlalchemy import (
     Column,
@@ -7,11 +10,32 @@ from sqlalchemy import (
     String,
     ForeignKey,
     create_engine,
-    Enum,
+    Enum as SqlEnum,
 )
-from property import EnergyEfficiency
 
 Base = declarative_base()
+
+
+class EnergyEfficiency(Enum):
+    A_plus = 1
+    A = 2
+    B = 3
+    C = 4
+    D = 5
+    E = 6
+    F = 7
+    G = 8
+    H = 9
+
+
+@dataclass
+class Location:
+    lat: float
+    long: float
+    city: str
+    postal_code: str
+    street: str
+    street_number: str
 
 
 class Broker(Base):
@@ -37,7 +61,7 @@ class Property(Base):
     is_kitchen_included = Column(Boolean)
     is_balcony_available = Column(Boolean)
     is_garden_available = Column(Boolean)
-    energy_efficiency = Column(Enum(EnergyEfficiency))
+    energy_efficiency = Column(SqlEnum(EnergyEfficiency))
     broker_id = Column(Integer, ForeignKey("BROKER.id"))
     broker = relationship("Broker", backref="properties")
 
@@ -51,6 +75,17 @@ if __name__ == "__main__":
 
     broker = Broker(first_name="Dagobert", last_name="Duck")
     session.add(broker)
-    property_1 = Property(size=88.5, broker=broker)
+    property_1 = Property(
+        size=88.5,
+        floor=1,
+        rooms=4,
+        year_of_construction=10,
+        is_furnished=False,
+        is_kitchen_included=False,
+        is_balcony_available=True,
+        is_garden_available=True,
+        energy_efficiency=EnergyEfficiency.B,
+        broker=broker,
+    )
 
     session.commit()
