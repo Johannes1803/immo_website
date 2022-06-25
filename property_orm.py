@@ -1,5 +1,6 @@
 from enum import Enum
 
+from sqlalchemy.ext.associationproxy import association_proxy
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 from sqlalchemy import (
     Column,
@@ -49,6 +50,15 @@ class AssociationTakerProperty(Base):
     ad_status_taker_perspective = Column(SqlEnum(AdStatusTakerPerspective))
     property = relationship("Property")
 
+    def __init__(
+        self,
+        property: "Property",
+        ad_status_taker_perspective: AdStatusTakerPerspective,
+    ):
+        super().__init__()
+        self.property = property
+        self.ad_status_taker_perspective = ad_status_taker_perspective
+
 
 class Agent(Base):
     """A base class for agents acting on properties."""
@@ -80,7 +90,17 @@ class Taker(Agent):
     __mapper_args__ = {
         "polymorphic_identity": "taker",
     }
-    watched_properties = relationship("AssociationTakerProperty")
+    _association_taker_properties = relationship("AssociationTakerProperty")
+    watched_properties = association_proxy(
+        "_association_taker_properties",
+        "property",
+        creator=lambda args: AssociationTakerProperty(
+            property=args[0], ad_status_taker_perspective=args[1]
+        ),
+    )
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
 
 class Property(Base):
@@ -196,15 +216,10 @@ if __name__ == "__main__":
     session.add(location_2)
 
     taker = Taker(first_name="John", last_name="Doe")
+
+    taker.watched_properties.append((property_2, AdStatusTakerPerspective.rejected))
     session.add(taker)
-
-    a = AssociationTakerProperty(
-        ad_status_taker_perspective=AdStatusTakerPerspective.watched
-    )
-    a.property = property_1
-    taker.watched_properties.append(a)
-
     session.commit()
 
-    for property_ in broker.managed_properties:
-        print(property_.size)
+    for property_ in taker.watched_properties:
+        print(property_)
