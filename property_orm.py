@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from enum import Enum
 
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
@@ -13,7 +12,7 @@ from sqlalchemy import (
     Enum as SqlEnum,
 )
 
-Base = declarative_base()
+Base: declarative_base = declarative_base()
 
 
 class EnergyEfficiency(Enum):
@@ -31,17 +30,17 @@ class EnergyEfficiency(Enum):
 class Broker(Base):
     """An agent who manages the seller perspective."""
 
-    __tablename__ = "BROKER"
+    __tablename__ = "broker"
     id = Column(Integer, primary_key=True)
     first_name = Column(String)
     last_name = Column(String)
 
 
 class Property(Base):
-    """A base class for rentals, houses for sales, etc."""
+    """A base class for rentals, houses for sale, etc."""
 
     # ToDo: add attributes which are non-primitive types
-    __tablename__ = "PROPERTY"
+    __tablename__ = "property"
     id = Column(Integer, primary_key=True)
     size = Column(Float)
     floor = Column(Integer)
@@ -52,15 +51,29 @@ class Property(Base):
     is_balcony_available = Column(Boolean)
     is_garden_available = Column(Boolean)
     energy_efficiency = Column(SqlEnum(EnergyEfficiency))
-    broker_id = Column(Integer, ForeignKey("BROKER.id"))
+    broker_id = Column(Integer, ForeignKey("broker.id"))
     broker = relationship("Broker", backref="properties")
     location = relationship("Location", back_populates="property", uselist=False)
+    type = Column(String(20))
+
+    __mapper_args__ = {
+        "polymorphic_on": type,
+        "polymorphic_identity": "property",
+    }
+
+
+class Rental(Property):
+    base_rent = Column(Float)
+    additional_costs = Column(Float)
+    __mapper_args__ = {
+        "polymorphic_identity": "rental",
+    }
 
 
 class Location(Base):
     """A location with address information."""
 
-    __tablename__ = "LOCATION"
+    __tablename__ = "location"
     id = Column(Integer, primary_key=True)
     lat = Column(Float)
     long = Column(Float)
@@ -68,7 +81,7 @@ class Location(Base):
     postal_code = Column(String)
     street = Column(String)
     street_number = Column(String)
-    property_id = Column(Integer, ForeignKey("PROPERTY.id"))
+    property_id = Column(Integer, ForeignKey("property.id"))
     property = relationship("Property", back_populates="location", uselist=False)
 
 
@@ -81,7 +94,7 @@ if __name__ == "__main__":
 
     broker = Broker(first_name="Dagobert", last_name="Duck")
     session.add(broker)
-    property_1 = Property(
+    property_1 = Rental(
         size=88.5,
         floor=1,
         rooms=4,
@@ -92,6 +105,8 @@ if __name__ == "__main__":
         is_garden_available=True,
         energy_efficiency=EnergyEfficiency.B,
         broker=broker,
+        base_rent=950.34,
+        additional_costs=35.34,
     )
     session.add(property_1)
 
