@@ -218,8 +218,10 @@ if __name__ == "__main__":
     taker = Taker(first_name="John", last_name="Doe")
 
     taker.watched_properties.append((estate_2, AdStatusTakerPerspective.rejected))
+    taker.watched_properties.append((estate_1, AdStatusTakerPerspective.accepted))
     session.add(taker)
     session.commit()
 
     for estate_ in taker.watched_properties:
+        print("-----")
         print(estate_)
