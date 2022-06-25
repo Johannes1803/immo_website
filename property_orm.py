@@ -43,12 +43,12 @@ class AdStatusTakerPerspective(Enum):
     accepted = 5
 
 
-class AssociationTakerestate(Base):
+class AssociationTakerEstate(Base):
     __tablename__ = "association_taker_estate"
     taker_id = Column(ForeignKey("agent.id"), primary_key=True)
     estate_id = Column(ForeignKey("estate.id"), primary_key=True)
     ad_status_taker_perspective = Column(SqlEnum(AdStatusTakerPerspective))
-    estate = relationship("estate")
+    estate = relationship("Estate")
 
     def __init__(
         self,
@@ -81,7 +81,7 @@ class Broker(Agent):
     __mapper_args__ = {
         "polymorphic_identity": "broker",
     }
-    managed_properties = relationship("estate", back_populates="broker")
+    managed_properties = relationship("Estate", back_populates="broker")
 
 
 class Taker(Agent):
@@ -90,11 +90,11 @@ class Taker(Agent):
     __mapper_args__ = {
         "polymorphic_identity": "taker",
     }
-    _association_taker_properties = relationship("AssociationTakerestate")
+    _association_taker_properties = relationship("AssociationTakerEstate")
     watched_properties = association_proxy(
         "_association_taker_properties",
         "estate",
-        creator=lambda args: AssociationTakerestate(
+        creator=lambda args: AssociationTakerEstate(
             estate=args[0], ad_status_taker_perspective=args[1]
         ),
     )
@@ -103,7 +103,7 @@ class Taker(Agent):
         super().__init__(**kwargs)
 
 
-class estate(Base):
+class Estate(Base):
     """A base class for rentals, houses for sale, etc."""
 
     __tablename__ = "estate"
@@ -129,7 +129,7 @@ class estate(Base):
     }
 
 
-class Rental(estate):
+class Rental(Estate):
     base_rent = Column(Float)
     additional_costs = Column(Float)
     __mapper_args__ = {
@@ -149,7 +149,7 @@ class Location(Base):
     street = Column(String)
     street_number = Column(String)
     estate_id = Column(Integer, ForeignKey("estate.id"))
-    estate = relationship("estate", back_populates="location", uselist=False)
+    estate = relationship("Estate", back_populates="location", uselist=False)
 
 
 if __name__ == "__main__":
