@@ -42,6 +42,14 @@ class AdStatusTakerPerspective(Enum):
     accepted = 5
 
 
+class Association(Base):
+    __tablename__ = "association"
+    taker_id = Column(ForeignKey("agent.id"), primary_key=True)
+    property_id = Column(ForeignKey("property.id"), primary_key=True)
+    extra_data = Column(String(50))
+    property = relationship("Property")
+
+
 class Agent(Base):
     """A base class for agents acting on properties."""
 
@@ -66,13 +74,13 @@ class Broker(Agent):
     managed_properties = relationship("Property", back_populates="broker")
 
 
-# class Taker(Agent):
-#     """An agent who manages the potential taker perspective."""
-#
-#     __mapper_args__ = {
-#         "polymorphic_identity": "taker",
-#     }
-#     watched_properties = relationship("Property", back_populates="agent")
+class Taker(Agent):
+    """An agent who manages the potential taker perspective."""
+
+    __mapper_args__ = {
+        "polymorphic_identity": "taker",
+    }
+    watched_properties = relationship("Association")
 
 
 class Property(Base):
@@ -186,6 +194,17 @@ if __name__ == "__main__":
         property=property_2,
     )
     session.add(location_2)
+    # create parent, append a child via association
+    # p = Parent()
+    # a = Association(extra_data="some data")
+    # a.child = Child()
+    # p.children.append(a)
+    taker = Taker(first_name="John", last_name="Doe")
+    session.add(taker)
+
+    a = Association(extra_data="some data")
+    a.property = property_1
+    taker.watched_properties.append(a)
 
     session.commit()
 
