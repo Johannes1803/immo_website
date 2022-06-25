@@ -42,11 +42,11 @@ class AdStatusTakerPerspective(Enum):
     accepted = 5
 
 
-class Association(Base):
-    __tablename__ = "association"
+class AssociationTakerProperty(Base):
+    __tablename__ = "association_taker_property"
     taker_id = Column(ForeignKey("agent.id"), primary_key=True)
     property_id = Column(ForeignKey("property.id"), primary_key=True)
-    extra_data = Column(String(50))
+    ad_status_taker_perspective = Column(SqlEnum(AdStatusTakerPerspective))
     property = relationship("Property")
 
 
@@ -80,7 +80,7 @@ class Taker(Agent):
     __mapper_args__ = {
         "polymorphic_identity": "taker",
     }
-    watched_properties = relationship("Association")
+    watched_properties = relationship("AssociationTakerProperty")
 
 
 class Property(Base):
@@ -194,15 +194,13 @@ if __name__ == "__main__":
         property=property_2,
     )
     session.add(location_2)
-    # create parent, append a child via association
-    # p = Parent()
-    # a = Association(extra_data="some data")
-    # a.child = Child()
-    # p.children.append(a)
+
     taker = Taker(first_name="John", last_name="Doe")
     session.add(taker)
 
-    a = Association(extra_data="some data")
+    a = AssociationTakerProperty(
+        ad_status_taker_perspective=AdStatusTakerPerspective.watched
+    )
     a.property = property_1
     taker.watched_properties.append(a)
 
