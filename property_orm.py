@@ -27,19 +27,49 @@ class EnergyEfficiency(Enum):
     H = 9
 
 
-class Broker(Base):
-    """An agent who manages the seller perspective."""
+class AdStatus(Enum):
+    created = 1
+    online = 2
+    not_taking_new_requests = 3
+    taken = 4
 
-    __tablename__ = "broker"
+
+class Agent(Base):
+    """A base class for agents acting on properties."""
+
+    __tablename__ = "agent"
     id = Column(Integer, primary_key=True)
     first_name = Column(String)
     last_name = Column(String)
+    type = Column(String(20))
+
+    __mapper_args__ = {
+        "polymorphic_on": type,
+        "polymorphic_identity": "agent",
+    }
+
+
+class Broker(Agent):
+    """An agent who manages the seller perspective."""
+
+    __mapper_args__ = {
+        "polymorphic_identity": "broker",
+    }
+    managed_properties = relationship("Property", back_populates="broker")
+
+
+# class Taker(Agent):
+#     """An agent who manages the potential taker perspective."""
+#
+#     __mapper_args__ = {
+#         "polymorphic_identity": "taker",
+#     }
+#     watched_properties = relationship("Property", back_populates="agent")
 
 
 class Property(Base):
     """A base class for rentals, houses for sale, etc."""
 
-    # ToDo: add attributes which are non-primitive types
     __tablename__ = "property"
     id = Column(Integer, primary_key=True)
     size = Column(Float)
@@ -48,12 +78,13 @@ class Property(Base):
     year_of_construction = Column(Integer)
     is_furnished = Column(Boolean)
     is_kitchen_included = Column(Boolean)
-    is_balcony_available = Column(Boolean)
-    is_garden_available = Column(Boolean)
+    is_balcony_included = Column(Boolean)
+    is_garden_included = Column(Boolean)
     energy_efficiency = Column(SqlEnum(EnergyEfficiency))
-    broker_id = Column(Integer, ForeignKey("broker.id"))
-    broker = relationship("Broker", backref="properties")
+    status = Column(SqlEnum(AdStatus), default=AdStatus.created)
     location = relationship("Location", back_populates="property", uselist=False)
+    broker_id = Column(Integer, ForeignKey("agent.id"))
+    broker = relationship("Broker", back_populates="managed_properties")
     type = Column(String(20))
 
     __mapper_args__ = {
@@ -101,8 +132,8 @@ if __name__ == "__main__":
         year_of_construction=10,
         is_furnished=False,
         is_kitchen_included=False,
-        is_balcony_available=True,
-        is_garden_available=True,
+        is_balcony_included=True,
+        is_garden_included=True,
         energy_efficiency=EnergyEfficiency.B,
         broker=broker,
         base_rent=950.34,
@@ -121,4 +152,34 @@ if __name__ == "__main__":
     )
     session.add(location_1)
 
+    property_2 = Rental(
+        size=188.5,
+        floor=2,
+        rooms=4,
+        year_of_construction=10,
+        is_furnished=False,
+        is_kitchen_included=False,
+        is_balcony_included=True,
+        is_garden_included=True,
+        energy_efficiency=EnergyEfficiency.B,
+        broker=broker,
+        base_rent=950.34,
+        additional_costs=35.34,
+    )
+    session.add(property_2)
+
+    location_2 = Location(
+        lat=90.1,
+        long=89.03,
+        city="London",
+        street="Downing Street",
+        street_number="14b",
+        postal_code="431",
+        property=property_2,
+    )
+    session.add(location_2)
+
     session.commit()
+
+    for property_ in broker.managed_properties:
+        print(property_.size)
