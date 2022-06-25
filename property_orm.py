@@ -34,6 +34,14 @@ class AdStatus(Enum):
     taken = 4
 
 
+class AdStatusTakerPerspective(Enum):
+    watched = 1
+    contacted = 2
+    appointment_scheduled = 3
+    rejected = 4
+    accepted = 5
+
+
 class Agent(Base):
     """A base class for agents acting on properties."""
 
